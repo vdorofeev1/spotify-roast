@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+*.jar
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Kotlin
+*.class
