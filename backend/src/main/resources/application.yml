@@ -1,6 +1,3 @@
-server:
-  port: 8080
-
 spring:
   application:
     name: backend
@@ -11,20 +8,18 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
-  flyway:
-    enabled: true
   security:
     oauth2:
       client:
         registration:
           spotify:
-            client-id: ${SPOTIFY_CLIENT_ID}
-            client-secret: ${SPOTIFY_CLIENT_SECRET}
+            client-id: ${SPOTIFY_CLIENT_ID:}
+            client-secret: ${SPOTIFY_CLIENT_SECRET:}
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/spotify"
-            client-authentication-method: client_secret_basic
-            scope: user-read-private,user-read-email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - user-read-private
+              - user-read-email
         provider:
           spotify:
             authorization-uri: https://accounts.spotify.com/authorize
