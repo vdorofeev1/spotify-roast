@@ -1,3 +1,6 @@
+include .env
+export
+
 up:
 	docker compose up --build
 
@@ -12,3 +15,6 @@ logs:
 
 psql:
 	docker compose exec db psql -U roast -d spotifyroast
+
+run-backend:
+	cd backend && ./gradlew bootRun
