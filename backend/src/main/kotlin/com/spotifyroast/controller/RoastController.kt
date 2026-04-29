@@ -1,16 +1,23 @@
 package com.spotifyroast.controller
 
 import com.spotifyroast.dto.RoastResponse
+import com.spotifyroast.service.RoastService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api")
-class RoastController {
+class RoastController(
+    private val roastService: RoastService
+) {
 
     @GetMapping("/roast")
     fun getRoast(): RoastResponse {
+        val spotifyData = roastService.generateRoast()
+
+        // For now, we still return a mocked roast but we've verified we can fetch data.
+        // In the next step we will integrate the LLM.
         val mockedRoast = """
             Your music taste is like a budget airline: you think you're going somewhere cool, 
             but you're mostly just stuck in a cramped seat listening to white noise. 
@@ -22,7 +29,7 @@ class RoastController {
             Overall, your Spotify profile is the sonic equivalent of unseasoned chicken. 
             It's functional, but nobody's asking for seconds.
         """.trimIndent()
-        
+
         return RoastResponse(roastText = mockedRoast)
     }
 }

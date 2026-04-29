@@ -20,6 +20,8 @@ spring:
             scope:
               - user-read-private
               - user-read-email
+              - user-top-read
+              - user-read-recently-played
         provider:
           spotify:
             authorization-uri: https://accounts.spotify.com/authorize
