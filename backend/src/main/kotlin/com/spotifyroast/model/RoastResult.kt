@@ -26,6 +26,9 @@ class RoastResult(
     @Column(name = "audio_features_json", columnDefinition = "jsonb")
     val audioFeaturesJson: String?,
 
+    @Column(name = "recently_played_json", columnDefinition = "jsonb")
+    val recentlyPlayedJson: String?,
+
     @Column(name = "generated_at", nullable = false, updatable = false)
     val generatedAt: OffsetDateTime = OffsetDateTime.now(),
 )

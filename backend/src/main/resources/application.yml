@@ -20,6 +20,8 @@ spring:
             scope:
               - user-read-private
               - user-read-email
+              - user-top-read
+              - user-read-recently-played
         provider:
           spotify:
             authorization-uri: https://accounts.spotify.com/authorize
@@ -30,3 +32,7 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+llm:
+  api-key: ${LLM_API_KEY}
+  model: ${LLM_MODEL}

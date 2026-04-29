@@ -9,7 +9,9 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class SecurityConfig(
+    private val oAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler
+) {
 
     @Value("\${ALLOWED_ORIGINS:http://localhost:3000}")
     private lateinit var allowedOrigins: String
@@ -29,11 +31,11 @@ class SecurityConfig {
             }
             .csrf { csrf -> csrf.disable() }
             .authorizeHttpRequests { auth ->
-                auth.requestMatchers("/", "/api/roast").permitAll()
+                auth.requestMatchers("/").permitAll()
                 auth.anyRequest().authenticated()
             }
             .oauth2Login { oauth2 -> oauth2
-                .defaultSuccessUrl("http://localhost:3000/roast", true)
+                .successHandler(oAuth2LoginSuccessHandler)
             }
             .build()
     }
