@@ -3,6 +3,7 @@ package com.spotifyroast.service
 import com.spotifyroast.dto.*
 import com.spotifyroast.model.User
 import lombok.RequiredArgsConstructor
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
@@ -10,6 +11,7 @@ import org.springframework.web.client.body
 @Service
 @RequiredArgsConstructor
 class SpotifyService(
+    @Qualifier("spotifyRestClient")
     private val spotifyRestClient: RestClient
 ) {
 
@@ -75,7 +77,7 @@ class SpotifyService(
     /**
      * Aggregates all data needed for a roast.
      */
-    fun getRoastData(user: User): Map<String, Any?> {
+    fun getRoastData(user: User): RoastData {
         val topArtists = getTopArtists(user)
         val topTracks = getTopTracks(user)
         val recentlyPlayed = getRecentlyPlayed(user)
@@ -83,11 +85,11 @@ class SpotifyService(
         val trackIds = topTracks?.items?.map { it.id } ?: emptyList()
         val audioFeatures = if (trackIds.isNotEmpty()) getAudioFeatures(user, trackIds) else null
 
-        return mapOf(
-            "topArtists" to topArtists,
-            "topTracks" to topTracks,
-            "audioFeatures" to audioFeatures,
-            "recentlyPlayed" to recentlyPlayed
+        return RoastData(
+            topArtists = topArtists,
+            topTracks = topTracks,
+            audioFeatures = audioFeatures,
+            recentlyPlayed = recentlyPlayed
         )
     }
 }
