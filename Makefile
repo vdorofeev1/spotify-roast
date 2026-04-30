@@ -1,6 +1,8 @@
 include .env
 export
 
+.PHONY: up down db logs psql run-backend run-frontend dev
+
 up:
 	docker compose up --build
 
@@ -18,3 +20,9 @@ psql:
 
 run-backend:
 	cd backend && ./gradlew bootRun
+
+run-frontend:
+	cd frontend && npm run dev
+
+dev: db
+	$(MAKE) -j2 run-backend run-frontend

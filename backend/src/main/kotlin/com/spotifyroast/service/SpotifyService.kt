@@ -23,43 +23,14 @@ class SpotifyService(
             .body<SpotifyUserProfile>()
     }
 
-    fun getTopArtists(user: User, limit: Int = 10, timeRange: String = "medium_term"): SpotifyTopArtistsResponse? {
-        return spotifyRestClient.get()
-            .uri { builder ->
-                builder.path("/me/top/artists")
-                    .queryParam("limit", limit)
-                    .queryParam("time_range", timeRange)
-                    .build()
-            }
-            .header("Authorization", "Bearer ${user.accessToken}")
-            .retrieve()
-            .body<SpotifyTopArtistsResponse>()
-    }
-
     fun getTopTracks(user: User, limit: Int = 10, timeRange: String = "medium_term"): SpotifyTopTracksResponse? {
-        return spotifyRestClient.get()
-            .uri { builder ->
-                builder.path("/me/top/tracks")
-                    .queryParam("limit", limit)
-                    .queryParam("time_range", timeRange)
-                    .build()
-            }
-            .header("Authorization", "Bearer ${user.accessToken}")
-            .retrieve()
+        return getTopItems(user, "tracks", limit, timeRange)
             .body<SpotifyTopTracksResponse>()
     }
 
-    fun getAudioFeatures(user: User, trackIds: List<String>): SpotifyAudioFeaturesResponse? {
-        if (trackIds.isEmpty()) return null
-        return spotifyRestClient.get()
-            .uri { builder ->
-                builder.path("/audio-features")
-                    .queryParam("ids", trackIds.joinToString(","))
-                    .build()
-            }
-            .header("Authorization", "Bearer ${user.accessToken}")
-            .retrieve()
-            .body<SpotifyAudioFeaturesResponse>()
+    fun getTopArtists(user: User, limit: Int = 10, timeRange: String = "medium_term"): SpotifyTopArtistsResponse? {
+        return getTopItems(user, "artists", limit, timeRange)
+            .body<SpotifyTopArtistsResponse>()
     }
 
     fun getRecentlyPlayed(user: User, limit: Int = 50): SpotifyRecentlyPlayedResponse? {
@@ -74,22 +45,20 @@ class SpotifyService(
             .body<SpotifyRecentlyPlayedResponse>()
     }
 
-    /**
-     * Aggregates all data needed for a roast.
-     */
-    fun getRoastData(user: User): RoastData {
-        val topArtists = getTopArtists(user)
-        val topTracks = getTopTracks(user)
-        val recentlyPlayed = getRecentlyPlayed(user)
-        
-        val trackIds = topTracks?.items?.map { it.id } ?: emptyList()
-        val audioFeatures = if (trackIds.isNotEmpty()) getAudioFeatures(user, trackIds) else null
-
-        return RoastData(
-            topArtists = topArtists,
-            topTracks = topTracks,
-            audioFeatures = audioFeatures,
-            recentlyPlayed = recentlyPlayed
-        )
+    private fun getTopItems(
+        user: User,
+        type: String,
+        limit: Int,
+        timeRange: String,
+    ): RestClient.ResponseSpec {
+        return spotifyRestClient.get()
+            .uri { builder ->
+                builder.path("/me/top/{type}")
+                    .queryParam("limit", limit)
+                    .queryParam("time_range", timeRange)
+                    .build(type)
+            }
+            .header("Authorization", "Bearer ${user.accessToken}")
+            .retrieve()
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
+import java.net.URI
 
 @Component
 class OAuth2LoginSuccessHandler(
@@ -30,7 +31,40 @@ class OAuth2LoginSuccessHandler(
 
         spotifyAuthService.saveOrUpdateUser(oauthToken.principal!!, authorizedClient)
 
-        defaultTargetUrl = "$frontendUrl/roast"
         super.onAuthenticationSuccess(request, response, authentication)
+    }
+
+    override fun determineTargetUrl(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication?,
+    ): String {
+        return "${resolveFrontendUrl(request)}/roast"
+    }
+
+    private fun resolveFrontendUrl(request: HttpServletRequest): String {
+        val configuredUri = URI(frontendUrl.trimEnd('/'))
+        val callbackHost = request.serverName
+        val configuredHost = configuredUri.host
+
+        val frontendUri = if (callbackHost.isLoopbackHost() && configuredHost.isLoopbackHost() && callbackHost != configuredHost) {
+            URI(
+                configuredUri.scheme,
+                configuredUri.userInfo,
+                callbackHost,
+                configuredUri.port,
+                configuredUri.path,
+                configuredUri.query,
+                configuredUri.fragment,
+            )
+        } else {
+            configuredUri
+        }
+
+        return frontendUri.toString().trimEnd('/')
+    }
+
+    private fun String?.isLoopbackHost(): Boolean {
+        return this == "localhost" || this == "127.0.0.1"
     }
 }

@@ -12,4 +12,5 @@ function buildBackendUrl(path) {
 }
 
 export const spotifyAuthPath = buildBackendUrl('/oauth2/authorization/spotify')
-export const roastApiPath = buildBackendUrl('/api/roast')
+export const topTracksApiPath = buildBackendUrl('/api/me/top-tracks?limit=10&timeRange=medium_term')
+export const roastApiPath = buildBackendUrl('/api/roast?limit=10&timeRange=medium_term')

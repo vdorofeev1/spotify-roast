@@ -1,13 +1,11 @@
 package com.spotifyroast.config
 
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestClient
 
 @Configuration
-@EnableConfigurationProperties(LlmProperties::class)
 class ClientConfig {
 
     @Bean
@@ -19,10 +17,10 @@ class ClientConfig {
     }
 
     @Bean
-    @Qualifier("llmRestClient")
-    fun llmRestClient(llmProperties: LlmProperties): RestClient {
+    @Qualifier("geminiRestClient")
+    fun geminiRestClient(): RestClient {
         return RestClient.builder()
-            .baseUrl(llmProperties.baseUrl.trimEnd('/'))
+            .baseUrl("https://generativelanguage.googleapis.com")
             .build()
     }
 }

@@ -33,6 +33,6 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-llm:
-  api-key: ${LLM_API_KEY}
-  model: ${LLM_MODEL}
+gemini:
+  api-key: ${LLM_API_KEY:}
+  model: ${LLM_MODEL:gemini-1.5-flash}

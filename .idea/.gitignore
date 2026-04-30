@@ -26,3 +26,10 @@ npm-debug.log*
 
 # Kotlin
 *.class
+
+#Agents
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+decisions.md
+rules.md

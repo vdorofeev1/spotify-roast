@@ -30,7 +30,7 @@ class OAuth2LoginSuccessHandlerTests {
     )
 
     @Test
-    fun `saves logged in spotify user and redirects to roast page`() {
+    fun `saves logged in spotify user and redirects to top tracks page`() {
         val principal = DefaultOAuth2User(
             listOf(SimpleGrantedAuthority("ROLE_USER")),
             mapOf("id" to "spotify-user", "display_name" to "Alice"),
@@ -49,7 +49,36 @@ class OAuth2LoginSuccessHandlerTests {
         handler.onAuthenticationSuccess(MockHttpServletRequest(), response, authentication)
 
         verify(spotifyAuthService).saveOrUpdateUser(principal, authorizedClient)
-        assertEquals("http://frontend.test/roast", response.redirectedUrl)
+        assertEquals("http://frontend.test/top-tracks", response.redirectedUrl)
+    }
+
+    @Test
+    fun `keeps loopback host consistent when redirecting to frontend`() {
+        val handler = OAuth2LoginSuccessHandler(
+            spotifyAuthService,
+            authorizedClientService,
+            "http://localhost:3000",
+        )
+        val principal = DefaultOAuth2User(
+            listOf(SimpleGrantedAuthority("ROLE_USER")),
+            mapOf("id" to "spotify-user", "display_name" to "Alice"),
+            "id",
+        )
+        val authentication = OAuth2AuthenticationToken(principal, principal.authorities, "spotify")
+        `when`(
+            authorizedClientService.loadAuthorizedClient<OAuth2AuthorizedClient>(
+                "spotify",
+                "spotify-user",
+            ),
+        ).thenReturn(authorizedClient())
+
+        val request = MockHttpServletRequest().apply {
+            serverName = "127.0.0.1"
+        }
+        val response = MockHttpServletResponse()
+        handler.onAuthenticationSuccess(request, response, authentication)
+
+        assertEquals("http://127.0.0.1:3000/top-tracks", response.redirectedUrl)
     }
 
     private fun authorizedClient(): OAuth2AuthorizedClient {

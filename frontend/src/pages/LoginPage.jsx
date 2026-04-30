@@ -2,16 +2,16 @@ import TerminalFrame from '../components/TerminalFrame'
 import { spotifyAuthPath } from '../config'
 
 const bootLines = [
-  '$ boot spotify-roast',
-  '> loading sarcasm engine',
-  '> calibrating taste profiler',
+  '$ boot spotify-top-tracks',
+  '> preparing Spotify session',
+  '> requesting top tracks scope',
   '> waiting for Spotify authorization',
 ]
 
 export default function LoginPage() {
   return (
     <TerminalFrame
-      title="spotify-roast@login"
+      title="spotify-tracks@login"
       eyebrow="Terminal Access"
       footer={
         <div className="footer-row">
@@ -21,10 +21,9 @@ export default function LoginPage() {
       }
     >
       <div className="hero-copy">
-        <h1>Sign in and let the terminal judge your music taste.</h1>
+        <h1>Roast your Spotify taste.</h1>
         <p>
-          Connect your Spotify account to generate a roast based on your listening history.
-          After authentication, you will land directly on the roast screen.
+          Connect your Spotify account to get a brutal, AI-powered roast of your listening habits.
         </p>
       </div>
 

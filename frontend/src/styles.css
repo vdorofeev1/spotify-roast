@@ -149,8 +149,7 @@ a {
   line-height: 1.7;
 }
 
-.boot-log,
-.roast-panel {
+.boot-log {
   border: 1px solid rgba(101, 255, 170, 0.12);
   border-radius: 16px;
   background: rgba(7, 24, 15, 0.72);
@@ -235,22 +234,82 @@ a {
   font-size: 0.84rem;
 }
 
-.status-pill {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 8px 12px;
-  border-radius: 999px;
-  color: var(--bright);
+.hero-copy-compact h1 {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1;
+}
+
+.track-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-item {
+  display: grid;
+  grid-template-columns: 42px 68px minmax(0, 1fr) minmax(140px, 0.35fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid rgba(101, 255, 170, 0.12);
+  border-radius: 8px;
+  background: rgba(7, 24, 15, 0.72);
+}
+
+.track-rank {
+  color: var(--warning);
+  font-size: 0.92rem;
+}
+
+.album-art {
+  width: 68px;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  object-fit: cover;
   background: rgba(125, 255, 178, 0.08);
 }
 
-.roast-copy {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
+.album-art-empty {
+  border: 1px dashed rgba(125, 255, 178, 0.24);
+}
+
+.track-main {
+  min-width: 0;
+}
+
+.track-main h2,
+.track-main p,
+.track-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-main h2 {
+  margin: 0 0 6px;
   color: var(--bright-strong);
-  font-size: clamp(1rem, 2.2vw, 1.4rem);
-  line-height: 1.8;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.track-main p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.track-meta {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: right;
 }
 
 @keyframes blink {
@@ -274,4 +333,36 @@ a {
   .terminal-window {
     border-radius: 16px;
   }
+
+  .track-item {
+    grid-template-columns: 34px 58px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .album-art {
+    width: 58px;
+  }
+
+  .track-meta {
+    grid-column: 3;
+    text-align: left;
+  }
+}
+
+/* Roast Styles */
+.roast-content {
+  margin-top: 1.5rem;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  color: var(--foreground);
+}
+
+.roast-paragraph {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.roast-paragraph:first-child {
+  color: var(--spotify-green);
+  font-weight: bold;
 }

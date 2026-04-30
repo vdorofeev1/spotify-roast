@@ -2,7 +2,6 @@ package com.spotifyroast.service
 
 import com.spotifyroast.model.User
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -78,10 +77,81 @@ class SpotifyServiceTests {
     }
 
     @Test
-    fun `does not call spotify when audio feature ids are empty`() {
-        val response = spotifyService.getAudioFeatures(testUser(), emptyList())
+    fun `fetches top artists with query params and bearer token`() {
+        server.expect(
+            once(),
+            requestTo("https://api.spotify.com/v1/me/top/artists?limit=2&time_range=long_term"),
+        )
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer access-token"))
+            .andRespond(
+                withSuccess(
+                    """
+                    {
+                      "items": [
+                        {
+                          "id": "artist-1",
+                          "name": "Artist",
+                          "genres": ["pop", "dance pop"],
+                          "images": [],
+                          "popularity": 80,
+                          "followers": {"href": null, "total": 1234},
+                          "external_urls": {"spotify": "https://open.spotify.com/artist/artist-1"}
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
-        assertNull(response)
+        val artists = spotifyService.getTopArtists(testUser(), limit = 2, timeRange = "long_term")
+
+        val artist = artists?.items?.single()
+        assertEquals("artist-1", artist?.id)
+        assertEquals(listOf("pop", "dance pop"), artist?.genres)
+        assertEquals(1234, artist?.followers?.total)
+        server.verify()
+    }
+
+    @Test
+    fun `fetches recently played tracks with query params and bearer token`() {
+        server.expect(
+            once(),
+            requestTo("https://api.spotify.com/v1/me/player/recently-played?limit=1"),
+        )
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer access-token"))
+            .andRespond(
+                withSuccess(
+                    """
+                    {
+                      "items": [
+                        {
+                          "track": {
+                            "id": "track-1",
+                            "name": "Song",
+                            "artists": [{"id": "artist-1", "name": "Artist"}],
+                            "album": {"id": "album-1", "name": "Album", "images": []},
+                            "duration_ms": 123000
+                          },
+                          "played_at": "2026-04-30T10:15:30Z",
+                          "context": {
+                            "type": "playlist",
+                            "uri": "spotify:playlist:playlist-1"
+                          }
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
+
+        val recentlyPlayed = spotifyService.getRecentlyPlayed(testUser(), limit = 1)
+
+        val item = recentlyPlayed?.items?.single()
+        assertEquals("track-1", item?.track?.id)
+        assertEquals("2026-04-30T10:15:30Z", item?.playedAt)
+        assertEquals("playlist", item?.context?.type)
         server.verify()
     }
 
