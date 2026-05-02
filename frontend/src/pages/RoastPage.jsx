@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import TerminalFrame from '../components/TerminalFrame'
 import { spotifyAuthPath, roastApiPath, userDataApiPath } from '../config'
@@ -82,10 +82,6 @@ function getTopArtistName(userData) {
   return [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'sad songs'
 }
 
-function formatArtists(track) {
-  return getArtistNames(track).join(', ') || 'unknown artist'
-}
-
 function buildUserDataLines(userData, status) {
   if (status === 'loading') {
     return [...openingLines, ...pendingDataLines]
@@ -101,10 +97,8 @@ function buildUserDataLines(userData, status) {
 
   const profileName = userData?.profile?.displayName || userData?.profile?.id || 'your username'
   const topArtistName = getTopArtistName(userData)
-  const topTrack = userData?.topTracks?.[0]
   const recentTrack = userData?.recentlyPlayed?.[0]?.track
   const genres = [...new Set((userData?.topArtists || []).flatMap((artist) => artist.genres || []))]
-  const explicitTracks = (userData?.topTracks || []).filter((track) => track.explicit).length
   const artistLine = topArtistName.toLowerCase() === 'drake'
     ? 'I see a lot of Drake.. are u ok?'
     : `I see a lot of ${topArtistName}.. are u ok?`
@@ -113,10 +107,8 @@ function buildUserDataLines(userData, status) {
     ...openingLines,
     `> ${artistLine}`,
     `> Do you think "${profileName}" is really funny? Ok nvm...`,
-    topTrack ? `> top track detected: "${topTrack.name}" by ${formatArtists(topTrack)}.` : null,
     recentTrack ? `> recently played: "${recentTrack.name}". Evidence is fresh.` : null,
     genres.length ? `> genre tags found: ${genres.slice(0, 3).join(', ')}.` : null,
-    explicitTracks ? `> ${explicitTracks}/10 top tracks are explicit. Subtle era cancelled.` : null,
     '> roast generation is still running. This may take a moment...',
   ].filter(Boolean)
 }
@@ -128,10 +120,8 @@ function buildQuestionScript(userData) {
 
   const profileName = userData?.profile?.displayName || userData?.profile?.id || 'your username'
   const topArtistName = getTopArtistName(userData)
-  const topTrack = userData?.topTracks?.[0]
   const recentTrack = userData?.recentlyPlayed?.[0]?.track
   const genres = [...new Set((userData?.topArtists || []).flatMap((artist) => artist.genres || []))]
-  const explicitTracks = (userData?.topTracks || []).filter((track) => track.explicit).length
 
   return [
     {
@@ -210,22 +200,6 @@ function buildQuestionScript(userData) {
           ],
         }
       : null,
-    explicitTracks
-      ? {
-          id: 'explicit',
-          prompt: `${explicitTracks}/10 top tracks are explicit. Is subtlety dead?`,
-          options: [
-            {
-              label: 'yes, it blocked me',
-              reaction: 'understandable. subtlety has standards.',
-            },
-            {
-              label: 'no, i just skip the quiet parts',
-              reaction: 'of course you do. reflection is scary.',
-            },
-          ],
-        }
-      : null,
   ].filter(Boolean)
 }
 
@@ -241,7 +215,6 @@ function extractTasteProfile(roast) {
 function buildTasteProfile(userData, roast, brainDamageIndex) {
   const profileName = userData?.profile?.displayName || userData?.profile?.id || 'unknown user'
   const topArtistName = userData?.topArtists?.[0]?.name || getTopArtistName(userData)
-  const topTrackName = userData?.topTracks?.[0]?.name || 'unknown track'
   const tasteProfile = extractTasteProfile(roast) || 'unknown-profile'
 
   return [
@@ -267,10 +240,6 @@ function buildTasteProfile(userData, roast, brainDamageIndex) {
     },
     {
       text: `  primary_symptom: ${topArtistName},`,
-      className: 'taste-profile-line',
-    },
-    {
-      text: `  repeat_offender: ${topTrackName},`,
       className: 'taste-profile-line',
     },
     {
@@ -422,6 +391,10 @@ function ActiveQuestionBlock({ question, questionNumber, onSelectAnswer }) {
 }
 
 export default function RoastPage() {
+  const chatScrollerRef = useRef(null)
+  const chatContentRef = useRef(null)
+  const chatEndRef = useRef(null)
+  const scrollFrameRef = useRef(null)
   const [state, setState] = useState({
     status: 'loading',
     roast: '',
@@ -434,6 +407,22 @@ export default function RoastPage() {
   const [answers, setAnswers] = useState([])
   const [completedReactionCount, setCompletedReactionCount] = useState(0)
   const [brainDamageIndex] = useState(() => Math.floor(Math.random() * 13) + 83)
+
+  const scrollChatToBottom = useCallback(() => {
+    window.cancelAnimationFrame(scrollFrameRef.current)
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      const chatScroller = chatScrollerRef.current
+
+      if (!chatScroller) {
+        return
+      }
+
+      chatScroller.scrollTo({
+        top: chatScroller.scrollHeight,
+        behavior: 'smooth',
+      })
+    })
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -486,6 +475,12 @@ export default function RoastPage() {
     generateRoast()
 
     return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      window.cancelAnimationFrame(scrollFrameRef.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -547,6 +542,34 @@ export default function RoastPage() {
     return 'Your musical roast.'
   })()
 
+  useEffect(() => {
+    if (userDataState.status === 'loading' || state.status === 'loading' || state.status === 'ready') {
+      scrollChatToBottom()
+    }
+  }, [
+    activeQuestion?.id,
+    answers.length,
+    completedReactionCount,
+    scrollChatToBottom,
+    state.status,
+    userDataState.status,
+  ])
+
+  useEffect(() => {
+    const chatContent = chatContentRef.current
+
+    if (!chatContent || typeof ResizeObserver === 'undefined') {
+      return undefined
+    }
+
+    const observer = new ResizeObserver(() => {
+      scrollChatToBottom()
+    })
+    observer.observe(chatContent)
+
+    return () => observer.disconnect()
+  }, [scrollChatToBottom, state.status, userDataState.status])
+
   function selectAnswer(option) {
     if (!activeQuestion) {
       return
@@ -561,78 +584,81 @@ export default function RoastPage() {
     ])
   }
 
-  const footer = (
-    <div className="footer-row">
-      <span>Endpoint: {roastApiPath}</span>
-      <span>Engine: gemini-2.5-flash-lite</span>
-    </div>
-  )
-
   return (
-    <TerminalFrame title="spotify-roast@results" eyebrow="The Roast" footer={footer}>
+    <TerminalFrame title="spotify-roast@results" eyebrow="The Roast">
       <div className="hero-copy">
         <h1>{heading}</h1>
         <p>{state.message || 'Answer the prompt. The terminal will not continue until you do.'}</p>
       </div>
 
       {userDataState.status === 'loading' ? (
-        <div className="boot-log roast-log" aria-live="polite">
-          <TypedTranscript lines={loadingLines.map((line) => ({ text: line }))} />
+        <div className="boot-log roast-log chat-scroll-container" aria-live="polite" ref={chatScrollerRef}>
+          <div className="chat-log-content" ref={chatContentRef}>
+            <TypedTranscript lines={loadingLines.map((line) => ({ text: line }))} />
+            <div className="chat-scroll-anchor" ref={chatEndRef} aria-hidden="true" />
+          </div>
         </div>
       ) : state.status === 'loading' || state.status === 'ready' ? (
-        <div className="boot-log roast-log interactive-roast-log" aria-live="polite">
-          {openingLines.map((line, index) => (
-            <StaticTerminalLine
-              key={`${line}-${index}`}
-              text={line}
-              className={line.startsWith('>') ? 'terminal-processing-line' : ''}
-            />
-          ))}
-          <TypedTerminalLine text="$ spotify-roast --interrogate-user" />
-          {visibleAnswers.map((answer, index) => (
-            <AnswerHistoryEntry
-              answer={answer}
-              index={index}
-              key={`${answer.question}-${index}`}
-              onReactionDone={() => {
-                setCompletedReactionCount((count) => Math.max(count, index + 1))
-              }}
-            />
-          ))}
+        <div
+          className="boot-log roast-log interactive-roast-log chat-scroll-container"
+          aria-live="polite"
+          ref={chatScrollerRef}
+        >
+          <div className="chat-log-content" ref={chatContentRef}>
+            {openingLines.map((line, index) => (
+              <StaticTerminalLine
+                key={`${line}-${index}`}
+                text={line}
+                className={line.startsWith('>') ? 'terminal-processing-line' : ''}
+              />
+            ))}
+            <TypedTerminalLine text="$ spotify-roast --interrogate-user" />
+            {visibleAnswers.map((answer, index) => (
+              <AnswerHistoryEntry
+                answer={answer}
+                index={index}
+                key={`${answer.question}-${index}`}
+                onReactionDone={() => {
+                  setCompletedReactionCount((count) => Math.max(count, index + 1))
+                }}
+              />
+            ))}
 
-          {activeQuestion ? (
-            <ActiveQuestionBlock
-              question={activeQuestion}
-              questionNumber={answers.length + 1}
-              onSelectAnswer={selectAnswer}
-            />
-          ) : hasAnsweredAllQuestions && canShowNextPrompt ? (
-            <TypedTranscript
-              lines={[
-                {
-                  text: '> all answers received. judging without mercy...',
-                  className: 'terminal-muted-line',
-                },
-                ...(state.status === 'loading'
-                  ? [
-                      {
-                        text: '> roast generation is still running. This may take a moment...',
-                        className: 'terminal-processing-line',
-                      },
-                    ]
-                  : [
-                      ...splitRoastLines(state.roast).map((line) => ({
-                        text: line,
-                        className: 'roast-terminal-line',
-                      })),
-                      ...buildTasteProfile(userDataState.data, state.roast, brainDamageIndex).map((line) => ({
-                        text: line.text,
-                        className: line.className,
-                      })),
-                    ]),
-              ]}
-            />
-          ) : null}
+            {activeQuestion ? (
+              <ActiveQuestionBlock
+                question={activeQuestion}
+                questionNumber={answers.length + 1}
+                onSelectAnswer={selectAnswer}
+              />
+            ) : hasAnsweredAllQuestions && canShowNextPrompt ? (
+              <TypedTranscript
+                lines={[
+                  {
+                    text: '> all answers received. judging without mercy...',
+                    className: 'terminal-muted-line',
+                  },
+                  ...(state.status === 'loading'
+                    ? [
+                        {
+                          text: '> roast generation is still running. This may take a moment...',
+                          className: 'terminal-processing-line',
+                        },
+                      ]
+                    : [
+                        ...splitRoastLines(state.roast).map((line) => ({
+                          text: line,
+                          className: 'roast-terminal-line',
+                        })),
+                        ...buildTasteProfile(userDataState.data, state.roast, brainDamageIndex).map((line) => ({
+                          text: line.text,
+                          className: line.className,
+                        })),
+                      ]),
+                ]}
+              />
+            ) : null}
+            <div className="chat-scroll-anchor" ref={chatEndRef} aria-hidden="true" />
+          </div>
         </div>
       ) : (
         <div className="action-row">
@@ -650,10 +676,6 @@ export default function RoastPage() {
 
       {hasAnsweredAllQuestions && state.status === 'ready' ? (
         <div className="action-row">
-          <Link className="terminal-button" to="/top-tracks">
-            <span className="button-prompt" aria-hidden="true">$</span>
-            View Top Tracks
-          </Link>
           <Link className="secondary-link" to="/">
             Try again
           </Link>

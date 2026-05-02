@@ -2,16 +2,16 @@ import TerminalFrame from '../components/TerminalFrame'
 import { spotifyAuthPath } from '../config'
 
 const bootLines = [
-  '$ boot spotify-top-tracks',
+  '$ boot spotify-roast',
   '> preparing Spotify session',
-  '> requesting top tracks scope',
+  '> requesting Spotify taste data',
   '> waiting for Spotify authorization',
 ]
 
 export default function LoginPage() {
   return (
     <TerminalFrame
-      title="spotify-tracks@login"
+      title="spotify-roast@login"
       eyebrow="Terminal Access"
       footer={
         <div className="footer-row">
