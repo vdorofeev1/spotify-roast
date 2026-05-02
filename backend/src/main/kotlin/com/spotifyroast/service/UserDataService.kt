@@ -63,7 +63,7 @@ class UserDataService(
         )
     }
 
-    fun getSpotifyData(limit: Int, timeRange: String): UserSpotifyDataResponse {
+    fun getUserData(limit: Int, timeRange: String): UserSpotifyDataResponse {
         validateLimit(limit)
         validateTimeRange(timeRange)
 
@@ -90,6 +90,10 @@ class UserDataService(
             topArtists = topArtists?.items.orEmpty().map(UserTopArtistResponse::from),
             recentlyPlayed = recentlyPlayed?.items.orEmpty().map(UserRecentlyPlayedItemResponse::from),
         )
+    }
+
+    fun getSpotifyData(limit: Int, timeRange: String): UserSpotifyDataResponse {
+        return getUserData(limit, timeRange)
     }
 
     private fun validateLimit(limit: Int) {

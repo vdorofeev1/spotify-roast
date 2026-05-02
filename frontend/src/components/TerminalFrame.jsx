@@ -6,7 +6,7 @@ export default function TerminalFrame({ title, eyebrow, children, footer }) {
           <div className="terminal-lights" aria-hidden="true">
             <span className="terminal-light terminal-light-red" />
             <span className="terminal-light terminal-light-amber" />
-            <span className="terminal-light terminal-light-green" />
+            <span className="terminal-light terminal-light-neutral" />
           </div>
           <p className="terminal-title">{title}</p>
         </header>

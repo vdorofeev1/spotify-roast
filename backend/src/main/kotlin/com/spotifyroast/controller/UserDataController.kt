@@ -45,12 +45,12 @@ class UserDataController(
         return userDataService.getRecentlyPlayed(limit = limit)
     }
 
-    @GetMapping("/me/spotify-data")
-    fun getSpotifyData(
+    @GetMapping("/userdata", "/me/spotify-data")
+    fun getUserData(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "medium_term") timeRange: String,
     ): UserSpotifyDataResponse {
-        return userDataService.getSpotifyData(
+        return userDataService.getUserData(
             limit = limit,
             timeRange = timeRange,
         )
