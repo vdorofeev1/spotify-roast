@@ -289,6 +289,10 @@ a {
   color: var(--muted);
 }
 
+.taste-profile-line {
+  white-space: pre-wrap;
+}
+
 .user-answer-line {
   color: var(--answer);
 }

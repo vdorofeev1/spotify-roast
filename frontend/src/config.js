@@ -1,14 +1,8 @@
-const explicitBackendUrl = import.meta.env.VITE_BACKEND_URL?.trim()
-const normalizedBackendUrl = explicitBackendUrl
-  ? explicitBackendUrl.replace(/\/+$/, '')
-  : ''
+const runtimeBackendUrl = window.__SPOTIFY_ROAST_CONFIG__?.BACKEND_URL
+const explicitBackendUrl = runtimeBackendUrl || import.meta.env.VITE_BACKEND_URL || ''
 
 function buildBackendUrl(path) {
-  if (normalizedBackendUrl) {
-    return `${normalizedBackendUrl}${path}`
-  }
-
-  return path
+  return explicitBackendUrl ? `${explicitBackendUrl}${path}` : path
 }
 
 export const spotifyAuthPath = buildBackendUrl('/oauth2/authorization/spotify')

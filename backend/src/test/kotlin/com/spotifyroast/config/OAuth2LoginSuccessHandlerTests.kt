@@ -81,6 +81,32 @@ class OAuth2LoginSuccessHandlerTests {
         assertEquals("http://127.0.0.1:3000/roast", response.redirectedUrl)
     }
 
+    @Test
+    fun `redirects to same-origin roast page when frontend url is not configured`() {
+        val handler = OAuth2LoginSuccessHandler(
+            spotifyAuthService,
+            authorizedClientService,
+            "",
+        )
+        val principal = DefaultOAuth2User(
+            listOf(SimpleGrantedAuthority("ROLE_USER")),
+            mapOf("id" to "spotify-user", "display_name" to "Alice"),
+            "id",
+        )
+        val authentication = OAuth2AuthenticationToken(principal, principal.authorities, "spotify")
+        `when`(
+            authorizedClientService.loadAuthorizedClient<OAuth2AuthorizedClient>(
+                "spotify",
+                "spotify-user",
+            ),
+        ).thenReturn(authorizedClient())
+
+        val response = MockHttpServletResponse()
+        handler.onAuthenticationSuccess(MockHttpServletRequest(), response, authentication)
+
+        assertEquals("/roast", response.redirectedUrl)
+    }
+
     private fun authorizedClient(): OAuth2AuthorizedClient {
         val issuedAt = Instant.parse("2026-01-01T00:00:00Z")
         val accessToken = OAuth2AccessToken(

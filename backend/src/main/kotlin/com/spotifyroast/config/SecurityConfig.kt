@@ -35,7 +35,7 @@ class SecurityConfig(
             }
             .csrf { csrf -> csrf.disable() }
             .authorizeHttpRequests { auth ->
-                auth.requestMatchers("/").permitAll()
+                auth.requestMatchers("/", "/api/ping").permitAll()
                 auth.anyRequest().authenticated()
             }
             .exceptionHandling { exceptions ->

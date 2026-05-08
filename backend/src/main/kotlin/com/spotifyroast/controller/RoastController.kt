@@ -21,5 +21,8 @@ class RoastController(
         return RoastResponse(roast)
     }
 
+    @GetMapping("/ping")
+    fun ping(): String = "alive"
+
     data class RoastResponse(val roast: String)
 }

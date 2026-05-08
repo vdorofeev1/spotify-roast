@@ -64,6 +64,11 @@ function getArtistNames(track) {
   return track?.artists?.map((artist) => artist.name).filter(Boolean) || []
 }
 
+function formatArtists(track) {
+  const artistNames = getArtistNames(track)
+  return artistNames.length ? artistNames.join(', ') : 'unknown artists'
+}
+
 function getTopArtistName(userData) {
   const artistCounts = new Map()
 
@@ -120,6 +125,7 @@ function buildQuestionScript(userData) {
 
   const profileName = userData?.profile?.displayName || userData?.profile?.id || 'your username'
   const topArtistName = getTopArtistName(userData)
+  const topTrack = userData?.topTracks?.[0]
   const recentTrack = userData?.recentlyPlayed?.[0]?.track
   const genres = [...new Set((userData?.topArtists || []).flatMap((artist) => artist.genres || []))]
 

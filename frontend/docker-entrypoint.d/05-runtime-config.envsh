@@ -1,0 +1,13 @@
+#!/bin/sh
+
+BACKEND_ORIGIN="${BACKEND_URL:-${VITE_BACKEND_URL:-}}"
+BACKEND_ORIGIN="${BACKEND_ORIGIN%/}"
+export BACKEND_ORIGIN
+
+escaped_backend_origin="$(printf '%s' "$BACKEND_ORIGIN" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+
+cat > /usr/share/nginx/html/runtime-config.js <<EOF
+window.__SPOTIFY_ROAST_CONFIG__ = {
+  BACKEND_URL: "$escaped_backend_origin"
+};
+EOF

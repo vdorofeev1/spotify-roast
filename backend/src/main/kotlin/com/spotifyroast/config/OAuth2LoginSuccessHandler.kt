@@ -15,7 +15,7 @@ import java.net.URI
 class OAuth2LoginSuccessHandler(
     private val spotifyAuthService: SpotifyAuthService,
     private val authorizedClientService: OAuth2AuthorizedClientService,
-    @Value("\${FRONTEND_URL:http://localhost:3000}") private val frontendUrl: String
+    @Value("\${frontend.url:}") private val frontendUrl: String
 ) : SimpleUrlAuthenticationSuccessHandler() {
 
     override fun onAuthenticationSuccess(

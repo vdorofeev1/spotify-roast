@@ -30,6 +30,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.15.1")
     implementation("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -48,4 +49,12 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.bootJar {
+    archiveFileName.set("app.jar")
+}
+
+tasks.jar {
+    enabled = false
 }
