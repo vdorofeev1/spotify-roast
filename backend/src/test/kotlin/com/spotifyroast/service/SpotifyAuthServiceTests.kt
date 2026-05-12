@@ -3,9 +3,11 @@ package com.spotifyroast.service
 import com.spotifyroast.model.User
 import com.spotifyroast.repository.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -58,13 +60,44 @@ class SpotifyAuthServiceTests {
         verify(userRepository).save(existingUser)
     }
 
+    @Test
+    fun `preserves existing refresh token when oauth2 login does not include one`() {
+        val existingUser = User(
+            spotifyId = "spotify-user",
+            displayName = "Alice",
+            accessToken = "old-access-token",
+            refreshToken = "old-refresh-token",
+            tokenExpiresAt = OffsetDateTime.now().minusHours(1),
+        )
+        `when`(userRepository.findBySpotifyId("spotify-user")).thenReturn(existingUser)
+        `when`(userRepository.save(existingUser)).thenReturn(existingUser)
+
+        val user = spotifyAuthService.saveOrUpdateUser(oauth2User(), authorizedClient(refreshTokenValue = null))
+
+        assertEquals("access-token", user.accessToken)
+        assertEquals("old-refresh-token", user.refreshToken)
+        verify(userRepository).save(existingUser)
+    }
+
+    @Test
+    fun `rejects new user when oauth2 login does not include refresh token`() {
+        `when`(userRepository.findBySpotifyId("spotify-user")).thenReturn(null)
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            spotifyAuthService.saveOrUpdateUser(oauth2User(), authorizedClient(refreshTokenValue = null))
+        }
+
+        assertEquals("Spotify refresh token is required for new users.", exception.message)
+        verify(userRepository, never()).save(any(User::class.java))
+    }
+
     private fun oauth2User() = DefaultOAuth2User(
         listOf(SimpleGrantedAuthority("ROLE_USER")),
         mapOf("id" to "spotify-user", "display_name" to "Alice"),
         "id",
     )
 
-    private fun authorizedClient(): OAuth2AuthorizedClient {
+    private fun authorizedClient(refreshTokenValue: String? = "refresh-token"): OAuth2AuthorizedClient {
         val issuedAt = Instant.parse("2026-01-01T00:00:00Z")
         val accessToken = OAuth2AccessToken(
             OAuth2AccessToken.TokenType.BEARER,
@@ -72,7 +105,7 @@ class SpotifyAuthServiceTests {
             issuedAt,
             issuedAt.plusSeconds(3600),
         )
-        val refreshToken = OAuth2RefreshToken("refresh-token", issuedAt)
+        val refreshToken = refreshTokenValue?.let { OAuth2RefreshToken(it, issuedAt) }
 
         return OAuth2AuthorizedClient(clientRegistration(), "spotify-user", accessToken, refreshToken)
     }

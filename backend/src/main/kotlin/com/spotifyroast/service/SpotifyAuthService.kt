@@ -27,7 +27,7 @@ class SpotifyAuthService(
         val displayName = oauth2User.attributes["display_name"] as? String
         
         val accessToken = authorizedClient.accessToken.tokenValue
-        val refreshToken = authorizedClient.refreshToken?.tokenValue ?: ""
+        val refreshToken = authorizedClient.refreshToken?.tokenValue
         val expiresAt = authorizedClient.accessToken.expiresAt?.atOffset(ZoneOffset.UTC) 
             ?: OffsetDateTime.now().plusSeconds(3600)
 
@@ -35,11 +35,15 @@ class SpotifyAuthService(
         
         return if (existingUser != null) {
             existingUser.accessToken = accessToken
-            existingUser.refreshToken = refreshToken
+            if (!refreshToken.isNullOrBlank()) {
+                existingUser.refreshToken = refreshToken
+            }
             existingUser.tokenExpiresAt = expiresAt
             //existingUser.displayName = displayName
             userRepository.save(existingUser)
         } else {
+            require(!refreshToken.isNullOrBlank()) { "Spotify refresh token is required for new users." }
+
             val newUser = User(
                 spotifyId = spotifyId,
                 displayName = displayName,
