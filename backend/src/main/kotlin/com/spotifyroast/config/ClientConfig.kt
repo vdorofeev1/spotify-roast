@@ -17,6 +17,14 @@ class ClientConfig {
     }
 
     @Bean
+    @Qualifier("spotifyAccountsRestClient")
+    fun spotifyAccountsRestClient(): RestClient {
+        return RestClient.builder()
+            .baseUrl("https://accounts.spotify.com")
+            .build()
+    }
+
+    @Bean
     @Qualifier("geminiRestClient")
     fun geminiRestClient(): RestClient {
         return RestClient.builder()

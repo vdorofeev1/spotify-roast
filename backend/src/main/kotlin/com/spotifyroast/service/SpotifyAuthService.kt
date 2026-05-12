@@ -2,24 +2,29 @@ package com.spotifyroast.service
 
 import com.spotifyroast.model.User
 import com.spotifyroast.repository.UserRepository
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.MediaType
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
+import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.util.Base64
 
 @Service
 class SpotifyAuthService(
     private val userRepository: UserRepository,
     @Value("\${spring.security.oauth2.client.registration.spotify.client-id}") private val clientId: String,
-    @Value("\${spring.security.oauth2.client.registration.spotify.client-secret}") private val clientSecret: String
+    @Value("\${spring.security.oauth2.client.registration.spotify.client-secret}") private val clientSecret: String,
+    @Qualifier("spotifyAccountsRestClient")
+    private val restClient: RestClient,
 ) {
-
-    private val restClient = RestClient.builder().baseUrl("https://accounts.spotify.com").build()
 
     @Transactional
     fun saveOrUpdateUser(oauth2User: OAuth2User, authorizedClient: OAuth2AuthorizedClient): User {
@@ -59,11 +64,20 @@ class SpotifyAuthService(
     fun refreshUserToken(user: User): User {
         if (!isTokenExpired(user)) return user
 
+        val form = LinkedMultiValueMap<String, String>().apply {
+            add("grant_type", "refresh_token")
+            add("refresh_token", user.refreshToken)
+        }
+
         val response = restClient.post()
             .uri("/api/token")
-            .contentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED)
-            .header("Authorization", "Basic " + java.util.Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray()))
-            .body("grant_type=refresh_token&refresh_token=${user.refreshToken}")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .header(
+                "Authorization",
+                "Basic " + Base64.getEncoder()
+                    .encodeToString("$clientId:$clientSecret".toByteArray(StandardCharsets.UTF_8)),
+            )
+            .body(form)
             .retrieve()
             .body<Map<String, Any>>()
 

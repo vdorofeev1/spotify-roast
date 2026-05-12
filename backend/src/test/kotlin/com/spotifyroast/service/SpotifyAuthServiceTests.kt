@@ -10,6 +10,9 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
 import org.springframework.security.oauth2.client.registration.ClientRegistration
@@ -17,13 +20,28 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
+import org.springframework.test.web.client.ExpectedCount.once
+import org.springframework.test.web.client.MockRestServiceServer
+import org.springframework.test.web.client.match.MockRestRequestMatchers.content
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
+import org.springframework.web.client.RestClient
 import java.time.Instant
 import java.time.OffsetDateTime
 
 class SpotifyAuthServiceTests {
 
     private val userRepository = mock(UserRepository::class.java)
-    private val spotifyAuthService = SpotifyAuthService(userRepository, "client-id", "client-secret")
+    private val accountsClientBuilder = RestClient.builder().baseUrl("https://accounts.spotify.com")
+    private val server = MockRestServiceServer.bindTo(accountsClientBuilder).build()
+    private val spotifyAuthService = SpotifyAuthService(
+        userRepository,
+        "client-id",
+        "client-secret",
+        accountsClientBuilder.build(),
+    )
 
     @Test
     fun `saves new user from oauth2 login`() {
@@ -89,6 +107,43 @@ class SpotifyAuthServiceTests {
 
         assertEquals("Spotify refresh token is required for new users.", exception.message)
         verify(userRepository, never()).save(any(User::class.java))
+    }
+
+    @Test
+    fun `refreshes expired user token with url encoded form body`() {
+        val user = User(
+            spotifyId = "spotify-user",
+            displayName = "Alice",
+            accessToken = "old-access-token",
+            refreshToken = "abc+123&x=y%z",
+            tokenExpiresAt = OffsetDateTime.now().minusHours(1),
+        )
+        `when`(userRepository.save(user)).thenReturn(user)
+
+        server.expect(once(), requestTo("https://accounts.spotify.com/api/token"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWlkOmNsaWVudC1zZWNyZXQ="))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED))
+            .andExpect(content().string("grant_type=refresh_token&refresh_token=abc%2B123%26x%3Dy%25z"))
+            .andRespond(
+                withSuccess(
+                    """
+                    {
+                      "access_token": "new-access-token",
+                      "expires_in": 3600,
+                      "refresh_token": "new-refresh-token"
+                    }
+                    """.trimIndent(),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
+
+        val refreshedUser = spotifyAuthService.refreshUserToken(user)
+
+        assertEquals("new-access-token", refreshedUser.accessToken)
+        assertEquals("new-refresh-token", refreshedUser.refreshToken)
+        verify(userRepository).save(user)
+        server.verify()
     }
 
     private fun oauth2User() = DefaultOAuth2User(
