@@ -42,7 +42,8 @@ class LlmService(
         )
 
         val response = geminiRestClient.post()
-            .uri("/v1beta/models/$model:generateContent?key=$apiKey")
+            .uri("/v1beta/models/$model:generateContent")
+            .header("x-goog-api-key", apiKey)
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()

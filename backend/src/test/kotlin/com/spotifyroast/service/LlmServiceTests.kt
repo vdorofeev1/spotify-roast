@@ -19,7 +19,7 @@ class LlmServiceTests {
     private val server = MockRestServiceServer.bindTo(builder).build()
     private val model = "gemini-1.5-flash"
     private val apiKey = "test-api-key"
-    
+
     private val llmService = LlmService(
         userDataService = userDataService,
         geminiRestClient = builder.build(),
@@ -36,8 +36,9 @@ class LlmServiceTests {
             recentlyPlayed = emptyList()
         )
 
-        server.expect(once(), requestTo("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"))
+        server.expect(once(), requestTo("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent"))
             .andExpect(method(org.springframework.http.HttpMethod.POST))
+            .andExpect(header("x-goog-api-key", apiKey))
             .andExpect(header("Content-Type", MediaType.APPLICATION_JSON_VALUE))
             .andRespond(
                 withSuccess(
@@ -79,7 +80,8 @@ class LlmServiceTests {
         )
         every { userDataService.getSpotifyData(10, "medium_term") } returns data
 
-        server.expect(once(), requestTo("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"))
+        server.expect(once(), requestTo("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent"))
+            .andExpect(header("x-goog-api-key", apiKey))
             .andRespond(
                 withSuccess(
                     """
@@ -104,6 +106,32 @@ class LlmServiceTests {
         val roast = llmService.generateRoast(10, "medium_term")
 
         assertEquals("Another roast", roast)
+        server.verify()
+    }
+
+    @Test
+    fun `API key is sent as header and never appears in the request URL`() {
+        val data = UserSpotifyDataResponse(
+            profile = null,
+            topTracks = emptyList(),
+            topArtists = emptyList(),
+            recentlyPlayed = emptyList()
+        )
+
+        server.expect(once(), requestTo("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent"))
+            .andExpect { request ->
+                val uri = request.uri.toString()
+                assert(!uri.contains("key=")) { "API key must not appear in URL, found: $uri" }
+            }
+            .andExpect(header("x-goog-api-key", apiKey))
+            .andRespond(
+                withSuccess(
+                    """{"candidates":[{"content":{"parts":[{"text":"roast"}]}}]}""",
+                    MediaType.APPLICATION_JSON,
+                )
+            )
+
+        llmService.generateRoastFromData(data)
         server.verify()
     }
 }
