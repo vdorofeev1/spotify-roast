@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import java.net.URI
 
@@ -33,7 +35,10 @@ class SecurityConfig(
                     config
                 }
             }
-            .csrf { csrf -> csrf.disable() }
+            .csrf { csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+            }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/", "/api/ping").permitAll()
                 auth.anyRequest().authenticated()
