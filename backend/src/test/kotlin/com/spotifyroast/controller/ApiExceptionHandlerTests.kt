@@ -14,6 +14,29 @@ class ApiExceptionHandlerTests {
     private val handler = ApiExceptionHandler()
 
     @Test
+    fun `service error response returns generic message and does not expose internal details`() {
+        val exception = IllegalStateException("User not found in database.")
+
+        val response = handler.handleServiceError(exception)
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+        assertEquals("An internal error occurred. Please try again later.", response.body?.message)
+        assertFalse(response.body?.message.orEmpty().contains("User not found"))
+        assertFalse(response.body?.message.orEmpty().contains("database"))
+    }
+
+    @Test
+    fun `service error response is generic regardless of internal exception message`() {
+        val exception = IllegalStateException("User not found during token refresh.")
+
+        val response = handler.handleServiceError(exception)
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.statusCode)
+        assertEquals("An internal error occurred. Please try again later.", response.body?.message)
+        assertFalse(response.body?.message.orEmpty().contains("token refresh"))
+    }
+
+    @Test
     fun `upstream error response does not expose upstream body`() {
         val upstreamBody = """{"error":"invalid_grant","secret":"provider-token-detail"}"""
         val exception = RestClientResponseException(

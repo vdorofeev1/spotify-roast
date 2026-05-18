@@ -38,8 +38,9 @@ class ApiExceptionHandler {
 
     @ExceptionHandler(IllegalStateException::class)
     fun handleServiceError(ex: IllegalStateException): ResponseEntity<ApiErrorResponse> {
+        logger.error("Internal service error: {}", ex.message, ex)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiErrorResponse(ex.message ?: "Request failed."))
+            .body(ApiErrorResponse("An internal error occurred. Please try again later."))
     }
 }
