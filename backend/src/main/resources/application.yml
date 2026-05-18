@@ -33,6 +33,16 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+encryption:
+  key: ${ENCRYPTION_KEY}
+
+rate-limit:
+  roast:
+    cooldown-seconds: 30   # minimum gap between /api/roast calls per user
+  spotify:
+    window-seconds: 60     # sliding window duration for /api/me/* endpoints
+    max-calls: 20          # max calls per user within that window
+
 gemini:
   api-key: ${LLM_API_KEY:}
   model: ${LLM_MODEL:gemini-1.5-flash}
