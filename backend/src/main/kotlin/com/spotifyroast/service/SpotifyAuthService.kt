@@ -62,11 +62,17 @@ class SpotifyAuthService(
 
     @Transactional
     fun refreshUserToken(user: User): User {
-        if (!isTokenExpired(user)) return user
+        // Acquire a PESSIMISTIC_WRITE (SELECT FOR UPDATE) lock on the row so concurrent
+        // calls for the same user are serialized at the DB level rather than racing to
+        // call Spotify's /api/token with the same refresh token. After the lock is granted
+        // re-read the row — another thread may have already refreshed it while we waited.
+        val lockedUser = userRepository.findBySpotifyIdForUpdate(user.spotifyId)
+            ?: throw IllegalStateException("User not found during token refresh.")
+        if (!isTokenExpired(lockedUser)) return lockedUser
 
         val form = LinkedMultiValueMap<String, String>().apply {
             add("grant_type", "refresh_token")
-            add("refresh_token", user.refreshToken)
+            add("refresh_token", lockedUser.refreshToken)
         }
 
         val response = restClient.post()
@@ -81,17 +87,18 @@ class SpotifyAuthService(
             .retrieve()
             .body<Map<String, Any>>()
 
-        val newAccessToken = response?.get("access_token") as? String ?: throw RuntimeException("Failed to refresh token")
+        val newAccessToken = response?.get("access_token") as? String
+            ?: throw RuntimeException("Failed to refresh token")
         val expiresIn = (response["expires_in"] as? Number)?.toLong() ?: 3600
-        val newRefreshToken = response["refresh_token"] as? String // Spotify might not always return a new refresh token
+        val newRefreshToken = response["refresh_token"] as? String
 
-        user.accessToken = newAccessToken
-        user.tokenExpiresAt = OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(expiresIn)
+        lockedUser.accessToken = newAccessToken
+        lockedUser.tokenExpiresAt = OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(expiresIn)
         if (newRefreshToken != null) {
-            user.refreshToken = newRefreshToken
+            lockedUser.refreshToken = newRefreshToken
         }
 
-        return userRepository.save(user)
+        return userRepository.save(lockedUser)
     }
 
     fun isTokenExpired(user: User): Boolean {

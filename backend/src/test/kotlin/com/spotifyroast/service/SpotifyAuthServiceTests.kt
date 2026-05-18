@@ -118,6 +118,7 @@ class SpotifyAuthServiceTests {
             refreshToken = "abc+123&x=y%z",
             tokenExpiresAt = OffsetDateTime.now().minusHours(1),
         )
+        `when`(userRepository.findBySpotifyIdForUpdate("spotify-user")).thenReturn(user)
         `when`(userRepository.save(user)).thenReturn(user)
 
         server.expect(once(), requestTo("https://accounts.spotify.com/api/token"))
@@ -144,6 +145,32 @@ class SpotifyAuthServiceTests {
         assertEquals("new-refresh-token", refreshedUser.refreshToken)
         verify(userRepository).save(user)
         server.verify()
+    }
+
+    @Test
+    fun `skips Spotify call when token was already refreshed before lock was acquired`() {
+        val staleUser = User(
+            spotifyId = "spotify-user",
+            displayName = "Alice",
+            accessToken = "stale-access-token",
+            refreshToken = "stale-refresh-token",
+            tokenExpiresAt = OffsetDateTime.now().minusHours(1),
+        )
+        val freshUser = User(
+            spotifyId = "spotify-user",
+            displayName = "Alice",
+            accessToken = "already-refreshed-token",
+            refreshToken = "already-refreshed-refresh-token",
+            tokenExpiresAt = OffsetDateTime.now().plusHours(1),
+        )
+        // Simulates the case where another thread refreshed and committed before we acquired the lock
+        `when`(userRepository.findBySpotifyIdForUpdate("spotify-user")).thenReturn(freshUser)
+
+        val result = spotifyAuthService.refreshUserToken(staleUser)
+
+        assertEquals("already-refreshed-token", result.accessToken)
+        verify(userRepository, never()).save(any(User::class.java))
+        server.verify() // no Spotify call made
     }
 
     private fun oauth2User() = DefaultOAuth2User(
