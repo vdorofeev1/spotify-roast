@@ -1,5 +1,6 @@
 package com.spotifyroast.model
 
+import com.spotifyroast.config.TokenEncryptionConverter
 import jakarta.persistence.*
 import java.time.OffsetDateTime
 
@@ -16,9 +17,11 @@ class User(
     @Column(name = "display_name")
     val displayName: String?,
 
+    @Convert(converter = TokenEncryptionConverter::class)
     @Column(name = "access_token", nullable = false, columnDefinition = "text")
     var accessToken: String,
 
+    @Convert(converter = TokenEncryptionConverter::class)
     @Column(name = "refresh_token", nullable = false, columnDefinition = "text")
     var refreshToken: String,
 
