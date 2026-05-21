@@ -22,7 +22,7 @@ import javax.crypto.spec.SecretKeySpec
 @Component
 @Converter
 class TokenEncryptionConverter(
-    @Value("\${encryption.key}") keyBase64: String
+    @Value("\${encryption.key:}") keyBase64: String
 ) : AttributeConverter<String, String> {
 
     private val secretKey: SecretKeySpec
@@ -35,7 +35,22 @@ class TokenEncryptionConverter(
     }
 
     init {
-        val keyBytes = Base64.getDecoder().decode(keyBase64)
+        val normalizedKey = keyBase64.trim()
+        require(normalizedKey.isNotBlank()) {
+            "ENCRYPTION_KEY is required because Spotify tokens are stored encrypted. " +
+                "Add ENCRYPTION_KEY=<value> to .env or export it before startup. " +
+                "Generate one with: openssl rand -base64 32"
+        }
+
+        val keyBytes = try {
+            Base64.getDecoder().decode(normalizedKey)
+        } catch (ex: IllegalArgumentException) {
+            throw IllegalArgumentException(
+                "ENCRYPTION_KEY must be a Base64-encoded 256-bit (32-byte) value. " +
+                    "Generate one with: openssl rand -base64 32",
+                ex,
+            )
+        }
         require(keyBytes.size == 32) {
             "ENCRYPTION_KEY must be a Base64-encoded 256-bit (32-byte) value. " +
                 "Generate with: openssl rand -base64 32"

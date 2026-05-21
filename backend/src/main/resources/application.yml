@@ -1,6 +1,10 @@
 spring:
   application:
     name: backend
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -34,7 +38,7 @@ springdoc:
     path: /swagger-ui.html
 
 encryption:
-  key: ${ENCRYPTION_KEY}
+  key: ${ENCRYPTION_KEY:}
 
 rate-limit:
   roast:
