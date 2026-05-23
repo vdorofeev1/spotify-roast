@@ -33,6 +33,6 @@ jobs:
             --cpu-boost \
             --memory=1Gi \
             --add-cloudsql-instances=project-47c8781e-43f8-4b91-ad1:us-central1:pet-project-db \
-            --set-env-vars="FRONTEND_URL=https://pet-project-frontend-192775393109.us-central1.run.app,ALLOWED_ORIGINS=https://pet-project-frontend-192775393109.us-central1.run.app,DB_URL=jdbc:postgresql:///spotifyroast?cloudSqlInstance=project-47c8781e-43f8-4b91-ad1:us-central1:pet-project-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory,DB_NAME=spotifyroast,DB_USER=roast,LLM_MODEL=gemini-3-flash-preview,SPOTIFY_CLIENT_ID=4b98d9ae9fa84a4f81673b33ef7382f0" \
+            --set-env-vars="FRONTEND_URL=https://pet-project-frontend-192775393109.us-central1.run.app,ALLOWED_ORIGINS=https://pet-project-frontend-192775393109.us-central1.run.app,SERVER_SERVLET_SESSION_COOKIE_SAME_SITE=none,SERVER_SERVLET_SESSION_COOKIE_SECURE=true,DB_URL=jdbc:postgresql:///spotifyroast?cloudSqlInstance=project-47c8781e-43f8-4b91-ad1:us-central1:pet-project-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory,DB_NAME=spotifyroast,DB_USER=roast,LLM_MODEL=gemini-3-flash-preview,SPOTIFY_CLIENT_ID=4b98d9ae9fa84a4f81673b33ef7382f0" \
             --set-secrets="DB_PASSWORD=DB_PASSWORD:latest,SPOTIFY_CLIENT_SECRET=SPOTIFY_CLIENT_SECRET:latest,LLM_API_KEY=LLM_API_KEY:latest,ENCRYPTION_KEY=ENCRYPTION_KEY:latest" \
             --allow-unauthenticated
