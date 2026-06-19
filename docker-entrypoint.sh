@@ -7,7 +7,7 @@ export PORT="${PORT:-8080}"
 
 # Substitute only our two variables — leave nginx's $host, $remote_addr etc. untouched
 envsubst '${PORT} ${BACKEND_ORIGIN}' \
-  < /etc/nginx/templates/default.conf.template \
+  < /etc/nginx/conf.d/default.conf.template \
   > /etc/nginx/conf.d/default.conf
 
 # Frontend reads this at runtime to know the backend URL.

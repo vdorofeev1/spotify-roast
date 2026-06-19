@@ -33,7 +33,7 @@ RUN apt-get update \
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
 # Nginx config template (processed at runtime by entrypoint)
-COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf.template
 
 # Backend JAR (named app.jar via tasks.bootJar in build.gradle.kts)
 COPY --from=backend-builder /app/build/libs/app.jar /app/app.jar
