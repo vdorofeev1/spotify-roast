@@ -32,6 +32,10 @@ RUN apt-get update \
 # Frontend static files
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
+# Create a minimal 50x.html so nginx can serve it on backend errors
+RUN echo '<html><body><h1>Service Unavailable</h1></body></html>' \
+    > /usr/share/nginx/html/50x.html
+
 # Nginx config template (processed at runtime by entrypoint)
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf.template
 
