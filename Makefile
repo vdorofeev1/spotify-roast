@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: up down start stop db frontend build-frontend logs psql run-backend run-frontend dev
+.PHONY: up down start stop db frontend build-frontend logs psql run-backend run-frontend dev build-combined run-combined
 
 up:
 	docker compose up --build
