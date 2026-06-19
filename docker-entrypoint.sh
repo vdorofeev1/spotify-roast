@@ -20,9 +20,13 @@ JSEOF
 
 # Start Spring Boot on internal port 9090 in the background
 java \
-  -Dspring.profiles.active=prod \
   -Dserver.port=9090 \
   -jar /app/app.jar &
+
+# Wait for Spring Boot to be ready before accepting traffic via nginx
+echo "Waiting for backend to be ready..."
+until curl -sf http://localhost:9090/api/ping > /dev/null 2>&1; do sleep 1; done
+echo "Backend ready."
 
 # Hand off to nginx in the foreground (PID 1 after exec)
 exec nginx -g "daemon off;"

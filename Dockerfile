@@ -25,7 +25,7 @@ FROM eclipse-temurin:17-jre
 
 # Install nginx and envsubst (from gettext-base)
 RUN apt-get update \
- && apt-get install -y --no-install-recommends nginx gettext-base \
+ && apt-get install -y --no-install-recommends nginx gettext-base curl \
  && rm -rf /var/lib/apt/lists/* \
  && rm -f /etc/nginx/sites-enabled/default
 
