@@ -18,6 +18,11 @@ window.__SPOTIFY_ROAST_CONFIG__ = {
 };
 JSEOF
 
+echo "=== Checking Cloud SQL socket ==="
+ls -la /cloudsql/ 2>&1 || echo "No /cloudsql directory"
+ls -la /cloudsql/positive-tuner-407111:europe-west1:roast-db 2>&1 || echo "Socket missing"
+echo "=== Starting Spring Boot ==="
+
 # Start Spring Boot on internal port 9090 in the background
 java \
   -Dserver.port=9090 \
