@@ -21,6 +21,7 @@ repositories {
 }
 
 dependencies {
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.19.1")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
